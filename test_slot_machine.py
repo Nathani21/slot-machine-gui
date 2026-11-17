@@ -1,4 +1,4 @@
-from slot_machine import COLS, ROWS, check_winnings, get_spin, symbol_count
+from slot_machine import COLS, ROWS, check_winnings, get_spin, symbol_count, symbol_value
 
 # Boards are lists of columns: board[col][row]
 NO_WIN = [["A", "B", "C"], ["B", "C", "D"], ["C", "D", "A"]]
@@ -53,3 +53,26 @@ def test_only_lines_bet_on_are_checked():
 def test_bottom_row_counts_when_betting_on_all_lines():
     winnings, _ = check_winnings(BOTTOM_ROW_WIN, 3, 10)
     assert winnings > 0
+
+
+def test_winning_line_pays_symbol_value_times_bet():
+    winnings, _ = check_winnings(TOP_ROW_WIN, 1, 10)
+    assert winnings == symbol_value["A"] * 10
+
+
+def test_winning_lines_are_reported_one_based():
+    _, win_lines = check_winnings(TOP_ROW_WIN, 3, 10)
+    assert win_lines == [1]
+
+
+def test_bottom_row_is_reported_as_line_three():
+    winnings, win_lines = check_winnings(BOTTOM_ROW_WIN, 3, 10)
+    assert win_lines == [3]
+    assert winnings == symbol_value["A"] * 10
+
+
+def test_multiple_winning_lines_add_up():
+    board = [["A", "B", "A"], ["A", "B", "A"], ["A", "B", "A"]]
+    winnings, win_lines = check_winnings(board, 3, 2)
+    assert win_lines == [1, 2, 3]
+    assert winnings == (symbol_value["A"] + symbol_value["B"] + symbol_value["A"]) * 2
