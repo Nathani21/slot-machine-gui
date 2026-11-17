@@ -122,6 +122,7 @@ class SlotMachine:
                 messagebox.showerror("Error", "Enter valid numbers!")
 
 # Run app
-root  = tk.Tk()
-app = SlotMachine(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = SlotMachine(root)
+    root.mainloop()
