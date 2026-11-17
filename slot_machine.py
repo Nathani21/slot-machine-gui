@@ -109,15 +109,15 @@ class SlotMachine:
                 for c in range(COLS):
                     self.slot_labels[r][c].config(text=slots[c][r])
 
-                winnings, win_lines = check_winnings(slots, lines, bet)
+            winnings, win_lines = check_winnings(slots, lines, bet)
 
-                self.balance += winnings - total_bet
+            self.balance += winnings - total_bet
 
-                self.balance_label.config(text=f"Balance: ${self.balance}")
+            self.balance_label.config(text=f"Balance: ${self.balance}")
 
-                messagebox.showinfo(
-                    "Result", f"You won ${winnings}\nWinning lines: {win_lines}"
-                )
+            messagebox.showinfo(
+                "Result", f"You won ${winnings}\nWinning lines: {win_lines}"
+            )
             
         except:
                 messagebox.showerror("Error", "Enter valid numbers!")
