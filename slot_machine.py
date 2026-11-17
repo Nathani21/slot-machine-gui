@@ -83,6 +83,7 @@ class SlotMachine:
 
         # Spin Button
         self.spin_btn = tk.Button(root, text="SPIN", command=self.spin, bg="green", fg="white")
+        self.spin_btn.pack(pady=10)
     
     def spin(self):
         try:
