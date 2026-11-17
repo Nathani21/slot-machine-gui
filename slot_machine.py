@@ -74,12 +74,14 @@ class SlotMachine:
             self.slot_labels.append(row)
 
         # Inputs
+        tk.Label(root, text=f"Lines (1-{MAX_LINES})").pack()
         self.lines_entry = tk.Entry(root)
-        self.lines_entry.insert(0, "Lines (1-3)")
+        self.lines_entry.insert(0, "1")
         self.lines_entry.pack(pady=5)
 
+        tk.Label(root, text=f"Bet per line (${MIN_BET}-${MAX_BET})").pack()
         self.bet_entry = tk.Entry(root)
-        self.bet_entry.insert(0, "Bet per line")
+        self.bet_entry.insert(0, str(MIN_BET))
         self.bet_entry.pack(pady=5)
 
         # Spin Button
@@ -90,38 +92,40 @@ class SlotMachine:
         try:
             lines = int(self.lines_entry.get())
             bet = int(self.bet_entry.get())
+        except ValueError:
+            messagebox.showerror("Error", "Enter whole numbers for lines and bet.")
+            return
 
-            if not (1 <= lines <= MAX_LINES):
-                raise ValueError("Invalid lines")
-            
-            if not (MIN_BET <= bet <= MAX_BET):
-                raise ValueError("Invalid bet")
-            
-            total_bet = lines * bet
+        if not (1 <= lines <= MAX_LINES):
+            messagebox.showerror("Error", f"Lines must be between 1 and {MAX_LINES}.")
+            return
 
-            if total_bet > self.balance:
-                messagebox.showerror("Error", "Not enough balance!")
-                return
-            
-            slots = get_spin()
+        if not (MIN_BET <= bet <= MAX_BET):
+            messagebox.showerror("Error", f"Bet must be between {MIN_BET} and {MAX_BET}.")
+            return
 
-            # Display slots
-            for r in range(ROWS):
-                for c in range(COLS):
-                    self.slot_labels[r][c].config(text=slots[c][r])
+        total_bet = lines * bet
 
-            winnings, win_lines = check_winnings(slots, lines, bet)
+        if total_bet > self.balance:
+            messagebox.showerror("Error", "Not enough balance!")
+            return
 
-            self.balance += winnings - total_bet
+        slots = get_spin()
 
-            self.balance_label.config(text=f"Balance: ${self.balance}")
+        # Display slots
+        for r in range(ROWS):
+            for c in range(COLS):
+                self.slot_labels[r][c].config(text=slots[c][r])
 
-            messagebox.showinfo(
-                "Result", f"You won ${winnings}\nWinning lines: {win_lines}"
-            )
-            
-        except:
-                messagebox.showerror("Error", "Enter valid numbers!")
+        winnings, win_lines = check_winnings(slots, lines, bet)
+
+        self.balance += winnings - total_bet
+
+        self.balance_label.config(text=f"Balance: ${self.balance}")
+
+        messagebox.showinfo(
+            "Result", f"You won ${winnings}\nWinning lines: {win_lines}"
+        )
 
 # Run app
 if __name__ == "__main__":
