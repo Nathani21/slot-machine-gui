@@ -25,8 +25,9 @@ def check_winnings(columns, lines, bet):
             if column[line] != symbol:
                 break
         else:
-            winnings += symbol_value[symbol] + bet
-    
+            winnings += symbol_value[symbol] * bet
+            winning_lines.append(line + 1)
+
     return winnings, winning_lines
 
 def get_spin():
