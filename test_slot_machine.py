@@ -9,7 +9,7 @@ BOTTOM_ROW_WIN = [["B", "C", "A"], ["D", "B", "A"], ["C", "D", "A"]]
 # get_spin
 def test_spin_has_correct_shape():
     columns = get_spin()
-    assert len(columns) == COLS
+    assert len(columns) == COLS + 1
     assert all(len(column) == ROWS for column in columns)
 
 
