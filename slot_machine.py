@@ -58,15 +58,22 @@ class SlotMachine:
 
         self.balance = STARTING_BALANCE
 
-        # Balance Label
-        self.balance_label = tk.Label(root, text=f"Balance: ${self.balance}", font=("Arial", 14))
+        self._build_balance_label()
+        self._build_reels()
+        self._build_inputs()
+        self._build_buttons()
+
+    def _build_balance_label(self):
+        self.balance_label = tk.Label(
+            self.root, text=f"Balance: ${self.balance}", font=("Arial", 14)
+        )
         self.balance_label.pack(pady=10)
 
-        # SLot Display
+    def _build_reels(self):
         self.slot_labels = []
         for r in range(ROWS):
             row = []
-            frame = tk.Frame(root)
+            frame = tk.Frame(self.root)
             frame.pack()
             for c in range(COLS):
                 lbl = tk.Label(frame, text="?", font=("Arial", 24), width=4)
@@ -74,24 +81,25 @@ class SlotMachine:
                 row.append(lbl)
             self.slot_labels.append(row)
 
-        # Inputs
-        tk.Label(root, text=f"Lines (1-{MAX_LINES})").pack()
-        self.lines_entry = tk.Entry(root)
+    def _build_inputs(self):
+        tk.Label(self.root, text=f"Lines (1-{MAX_LINES})").pack()
+        self.lines_entry = tk.Entry(self.root)
         self.lines_entry.insert(0, "1")
         self.lines_entry.pack(pady=5)
 
-        tk.Label(root, text=f"Bet per line (${MIN_BET}-${MAX_BET})").pack()
-        self.bet_entry = tk.Entry(root)
+        tk.Label(self.root, text=f"Bet per line (${MIN_BET}-${MAX_BET})").pack()
+        self.bet_entry = tk.Entry(self.root)
         self.bet_entry.insert(0, str(MIN_BET))
         self.bet_entry.pack(pady=5)
 
-        # Spin Button
-        self.spin_btn = tk.Button(root, text="SPIN", command=self.spin, bg="green", fg="white")
+    def _build_buttons(self):
+        self.spin_btn = tk.Button(
+            self.root, text="SPIN", command=self.spin, bg="green", fg="white"
+        )
         self.spin_btn.pack(pady=10)
 
-        # New Game Button (only enabled when the game is over)
         self.new_game_btn = tk.Button(
-            root, text="NEW GAME", command=self.new_game, state=tk.DISABLED
+            self.root, text="NEW GAME", command=self.new_game, state=tk.DISABLED
         )
         self.new_game_btn.pack(pady=(0, 10))
     
