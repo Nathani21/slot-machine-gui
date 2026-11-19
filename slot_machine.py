@@ -60,7 +60,7 @@ def get_spin():
 class SlotMachine:
     def __init__(self, root):
         self.root = root
-        self.root.title("Slot Machine")
+        self.root.title("Slot Machine v1.0")
 
         self.balance = STARTING_BALANCE
 
