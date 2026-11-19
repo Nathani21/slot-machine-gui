@@ -6,6 +6,12 @@ from tkinter import messagebox
 MAX_LINES, MAX_BET, MIN_BET, ROWS, COLS = 3, 100, 1, 3, 3
 STARTING_BALANCE = 100
 
+FONT_BALANCE = ("Arial", 22, "bold")
+FONT_REEL = ("Arial", 40, "bold")
+FONT_LABEL = ("Arial", 14)
+FONT_INPUT = ("Arial", 16)
+FONT_BUTTON = ("Arial", 16, "bold")
+
 symbol_count = {
     "A": 2, "B": 4, "C": 6, "D": 8
 }
@@ -65,9 +71,9 @@ class SlotMachine:
 
     def _build_balance_label(self):
         self.balance_label = tk.Label(
-            self.root, text=f"Balance: ${self.balance}", font=("Arial", 14)
+            self.root, text=f"Balance: ${self.balance}", font=FONT_BALANCE
         )
-        self.balance_label.pack(pady=10)
+        self.balance_label.pack(pady=(15, 10))
 
     def _build_reels(self):
         self.slot_labels = []
@@ -76,32 +82,40 @@ class SlotMachine:
             frame = tk.Frame(self.root)
             frame.pack()
             for c in range(COLS):
-                lbl = tk.Label(frame, text="?", font=("Arial", 24), width=4)
-                lbl.pack(side=tk.LEFT, padx=5, pady=5)
+                lbl = tk.Label(frame, text="?", font=FONT_REEL, width=3)
+                lbl.pack(side=tk.LEFT, padx=8, pady=8)
                 row.append(lbl)
             self.slot_labels.append(row)
 
     def _build_inputs(self):
-        tk.Label(self.root, text=f"Lines (1-{MAX_LINES})").pack()
-        self.lines_entry = tk.Entry(self.root)
+        tk.Label(self.root, text=f"Lines (1-{MAX_LINES})", font=FONT_LABEL).pack()
+        self.lines_entry = tk.Entry(
+            self.root, font=FONT_INPUT, width=8, justify="center"
+        )
         self.lines_entry.insert(0, "1")
-        self.lines_entry.pack(pady=5)
+        self.lines_entry.pack(pady=(0, 10))
 
-        tk.Label(self.root, text=f"Bet per line (${MIN_BET}-${MAX_BET})").pack()
-        self.bet_entry = tk.Entry(self.root)
+        tk.Label(
+            self.root, text=f"Bet per line (${MIN_BET}-${MAX_BET})", font=FONT_LABEL
+        ).pack()
+        self.bet_entry = tk.Entry(
+            self.root, font=FONT_INPUT, width=8, justify="center"
+        )
         self.bet_entry.insert(0, str(MIN_BET))
-        self.bet_entry.pack(pady=5)
+        self.bet_entry.pack(pady=(0, 10))
 
     def _build_buttons(self):
         self.spin_btn = tk.Button(
-            self.root, text="SPIN", command=self.spin, bg="green", fg="white"
+            self.root, text="SPIN", command=self.spin, bg="green", fg="white",
+            font=FONT_BUTTON, width=10,
         )
         self.spin_btn.pack(pady=10)
 
         self.new_game_btn = tk.Button(
-            self.root, text="NEW GAME", command=self.new_game, state=tk.DISABLED
+            self.root, text="NEW GAME", command=self.new_game, state=tk.DISABLED,
+            font=FONT_BUTTON, width=10,
         )
-        self.new_game_btn.pack(pady=(0, 10))
+        self.new_game_btn.pack(pady=(0, 15))
     
     def spin(self):
         try:
