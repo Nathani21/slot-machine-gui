@@ -1,4 +1,6 @@
+import os
 import random
+import sys
 import tkinter as tk
 from tkinter import messagebox
 
@@ -19,6 +21,11 @@ symbol_count = {
 symbol_value = {
     "A": 5, "B": 4, "C": 3, "D": 2
 }
+
+def resource_path(relative_path):
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, relative_path)
+
 
 # LOGIC
 def check_winnings(columns, lines, bet):
@@ -61,6 +68,7 @@ class SlotMachine:
     def __init__(self, root):
         self.root = root
         self.root.title("Slot Machine v1.0")
+        self._set_icon()
 
         self.balance = STARTING_BALANCE
 
@@ -68,6 +76,12 @@ class SlotMachine:
         self._build_reels()
         self._build_inputs()
         self._build_buttons()
+
+    def _set_icon(self):
+        try:
+            self.root.iconbitmap(resource_path(os.path.join("assets", "icon.ico")))
+        except Exception:
+            pass
 
     def _build_balance_label(self):
         self.balance_label = tk.Label(
