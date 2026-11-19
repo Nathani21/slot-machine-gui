@@ -4,6 +4,8 @@
 
 A small slot machine game for the desktop, built with Python and Tkinter. Choose how many lines to play and how much to bet per line, then spin the reels.
 
+![Slot Machine GUI screenshot](screenshot.png)
+
 > **Play money only.** This is a learning project. No real money is involved, and the odds are heavily in the house's favour, so expect your balance to drain.
 
 ## Features
