@@ -242,6 +242,7 @@ class SlotMachine:
                 self.slot_labels[r][c].config(text=slots[c][r])
 
         winnings, win_lines = check_winnings(slots, lines, bet)
+        self._show_win_highlight(win_lines)
 
         self.balance += winnings - total_bet
 
@@ -252,6 +253,16 @@ class SlotMachine:
         if self.balance < MIN_BET:
             self.game_over()
 
+    def _show_win_highlight(self, win_lines):
+        winning_rows = {line - 1 for line in win_lines}
+        for r, row in enumerate(self.slot_labels):
+            if r in winning_rows:
+                bg, fg, border = COLOR_GOLD, COLOR_BG, COLOR_CREAM
+            else:
+                bg, fg, border = COLOR_CREAM, COLOR_RED, COLOR_GOLD
+            for label in row:
+                label.config(bg=bg, fg=fg, highlightbackground=border)
+
     def game_over(self):
         self.spin_btn.config(state=tk.DISABLED)
         self.new_game_btn.config(state=tk.NORMAL)
@@ -261,6 +272,7 @@ class SlotMachine:
 
     def new_game(self):
         self.result_label.config(text=READY_TEXT)
+        self._show_win_highlight([])
         self.balance = STARTING_BALANCE
         self.balance_label.config(text=f"Balance: ${self.balance}")
         for row in self.slot_labels:
