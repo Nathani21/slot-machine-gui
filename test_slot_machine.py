@@ -1,4 +1,12 @@
-from slot_machine import COLS, ROWS, check_winnings, get_spin, symbol_count, symbol_value
+from slot_machine import (
+    COLS,
+    ROWS,
+    check_winnings,
+    format_result,
+    get_spin,
+    symbol_count,
+    symbol_value,
+)
 
 # Boards are lists of columns: board[col][row]
 NO_WIN = [["A", "B", "C"], ["B", "C", "D"], ["C", "D", "A"]]
@@ -86,3 +94,15 @@ def test_expected_return_is_close_to_but_below_the_bet():
         symbol_value[s] * (symbol_count[s] / total) ** COLS for s in symbol_count
     )
     assert 0.85 <= expected <= 1.0
+
+
+def test_format_result_no_win():
+    assert format_result(0, []) == "No win this time"
+
+
+def test_format_result_single_line():
+    assert format_result(50, [1]) == "You won $50 on line 1!"
+
+
+def test_format_result_multiple_lines():
+    assert format_result(75, [1, 3]) == "You won $75 on lines 1, 3!"
