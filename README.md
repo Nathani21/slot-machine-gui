@@ -12,6 +12,8 @@ A small slot machine game for the desktop, built with Python and Tkinter. Choose
 
 - 3x3 reels with four symbols: A, B, C and D
 - Play 1 to 3 lines with a bet of $1 to $100 per line
+- Classic casino look: dark green felt, gold borders and cream reels
+- Winning rows light up in gold, with the result shown under the reels
 - Start with $100; a game over popup and a NEW GAME button when you run out
 - Clear error messages for invalid input
 - Game logic covered by pytest tests, run on every pull request with GitHub Actions
