@@ -21,6 +21,9 @@ COLOR_GOLD_LIGHT = "#FFD54F"
 COLOR_CREAM = "#FFF8E1"
 COLOR_RED = "#C62828"
 
+FONT_RESULT = ("Arial", 16, "bold")
+READY_TEXT = "Place your bet and spin!"
+
 symbol_count = {
     "A": 2, "B": 4, "C": 6, "D": 8
 }
@@ -50,6 +53,14 @@ def check_winnings(columns, lines, bet):
             winning_lines.append(line + 1)
 
     return winnings, winning_lines
+
+def format_result(winnings, win_lines):
+    if winnings == 0:
+        return "No win this time"
+    label = "line" if len(win_lines) == 1 else "lines"
+    numbers = ", ".join(str(n) for n in win_lines)
+    return f"You won ${winnings} on {label} {numbers}!"
+
 
 def get_spin():
     all_symbols = []
@@ -82,6 +93,7 @@ class SlotMachine:
 
         self._build_balance_label()
         self._build_reels()
+        self._build_result_label()
         self._build_inputs()
         self._build_buttons()
 
@@ -121,6 +133,16 @@ class SlotMachine:
                 lbl.pack(side=tk.LEFT, padx=8, pady=8)
                 row.append(lbl)
             self.slot_labels.append(row)
+
+    def _build_result_label(self):
+        self.result_label = tk.Label(
+            self.root,
+            text=READY_TEXT,
+            font=FONT_RESULT,
+            bg=COLOR_BG,
+            fg=COLOR_GOLD_LIGHT,
+        )
+        self.result_label.pack(pady=(5, 15))
 
     def _build_inputs(self):
         tk.Label(
@@ -225,9 +247,7 @@ class SlotMachine:
 
         self.balance_label.config(text=f"Balance: ${self.balance}")
 
-        messagebox.showinfo(
-            "Result", f"You won ${winnings}\nWinning lines: {win_lines}"
-        )
+        self.result_label.config(text=format_result(winnings, win_lines))
 
         if self.balance < MIN_BET:
             self.game_over()
@@ -240,6 +260,7 @@ class SlotMachine:
         )
 
     def new_game(self):
+        self.result_label.config(text=READY_TEXT)
         self.balance = STARTING_BALANCE
         self.balance_label.config(text=f"Balance: ${self.balance}")
         for row in self.slot_labels:
