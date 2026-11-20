@@ -76,3 +76,13 @@ def test_multiple_winning_lines_add_up():
     winnings, win_lines = check_winnings(board, 3, 2)
     assert win_lines == [1, 2, 3]
     assert winnings == (symbol_value["A"] + symbol_value["B"] + symbol_value["A"]) * 2
+
+
+def test_expected_return_is_close_to_but_below_the_bet():
+    # Each cell is equally likely to be any symbol in the pool, so a row of
+    # three matches with probability (count / pool size) ** COLS.
+    total = sum(symbol_count.values())
+    expected = sum(
+        symbol_value[s] * (symbol_count[s] / total) ** COLS for s in symbol_count
+    )
+    assert 0.85 <= expected <= 1.0

@@ -6,7 +6,7 @@ A small slot machine game for the desktop, built with Python and Tkinter. Choose
 
 ![Slot Machine GUI screenshot](screenshot.png)
 
-> **Play money only.** This is a learning project. No real money is involved, and the odds are heavily in the house's favour, so expect your balance to drain.
+> **Play money only.** This is a learning project. No real money is involved, and the house still has a small edge, so expect your balance to drift down over time.
 
 ## Features
 
@@ -24,14 +24,14 @@ A small slot machine game for the desktop, built with Python and Tkinter. Choose
 
 ## Payouts
 
-Each column is drawn from a pool of 20 symbols. Rarer symbols pay more.
+Each column is drawn from a pool of 20 symbols. Rarer symbols pay more. Over many spins the game pays back about 90% of what you bet, so the house keeps a small edge.
 
 | Symbol | In each pool of 20 | Pays per winning line |
 |--------|--------------------|-----------------------|
-| A      | 2                  | 5 x bet               |
-| B      | 4                  | 4 x bet               |
-| C      | 6                  | 3 x bet               |
-| D      | 8                  | 2 x bet               |
+| A      | 2                  | 50 x bet              |
+| B      | 4                  | 25 x bet              |
+| C      | 6                  | 10 x bet              |
+| D      | 8                  | 6 x bet               |
 
 ## Download
 
