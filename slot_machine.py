@@ -14,6 +14,13 @@ FONT_LABEL = ("Arial", 14)
 FONT_INPUT = ("Arial", 16)
 FONT_BUTTON = ("Arial", 16, "bold")
 
+COLOR_BG = "#0B3D2E"  # dark green felt
+COLOR_FELT_LIGHT = "#1B5E4B"
+COLOR_GOLD = "#FFC107"
+COLOR_GOLD_LIGHT = "#FFD54F"
+COLOR_CREAM = "#FFF8E1"
+COLOR_RED = "#C62828"
+
 symbol_count = {
     "A": 2, "B": 4, "C": 6, "D": 8
 }
@@ -69,6 +76,7 @@ class SlotMachine:
         self.root = root
         self.root.title("Slot Machine v1.1")
         self._set_icon()
+        self.root.configure(bg=COLOR_BG)
 
         self.balance = STARTING_BALANCE
 
@@ -85,7 +93,11 @@ class SlotMachine:
 
     def _build_balance_label(self):
         self.balance_label = tk.Label(
-            self.root, text=f"Balance: ${self.balance}", font=FONT_BALANCE
+            self.root,
+            text=f"Balance: ${self.balance}",
+            font=FONT_BALANCE,
+            bg=COLOR_BG,
+            fg=COLOR_GOLD,
         )
         self.balance_label.pack(pady=(15, 10))
 
@@ -93,41 +105,88 @@ class SlotMachine:
         self.slot_labels = []
         for r in range(ROWS):
             row = []
-            frame = tk.Frame(self.root)
+            frame = tk.Frame(self.root, bg=COLOR_BG)
             frame.pack()
             for c in range(COLS):
-                lbl = tk.Label(frame, text="?", font=FONT_REEL, width=3)
+                lbl = tk.Label(
+                    frame,
+                    text="?",
+                    font=FONT_REEL,
+                    width=3,
+                    bg=COLOR_CREAM,
+                    fg=COLOR_RED,
+                    highlightbackground=COLOR_GOLD,
+                    highlightthickness=3,
+                )
                 lbl.pack(side=tk.LEFT, padx=8, pady=8)
                 row.append(lbl)
             self.slot_labels.append(row)
 
     def _build_inputs(self):
-        tk.Label(self.root, text=f"Lines (1-{MAX_LINES})", font=FONT_LABEL).pack()
+        tk.Label(
+            self.root,
+            text=f"Lines (1-{MAX_LINES})",
+            font=FONT_LABEL,
+            bg=COLOR_BG,
+            fg=COLOR_CREAM,
+        ).pack()
         self.lines_entry = tk.Entry(
-            self.root, font=FONT_INPUT, width=8, justify="center"
+            self.root,
+            font=FONT_INPUT,
+            width=8,
+            justify="center",
+            bg=COLOR_CREAM,
+            fg=COLOR_BG,
+            insertbackground=COLOR_BG,
         )
         self.lines_entry.insert(0, "1")
         self.lines_entry.pack(pady=(0, 10))
 
         tk.Label(
-            self.root, text=f"Bet per line (${MIN_BET}-${MAX_BET})", font=FONT_LABEL
+            self.root,
+            text=f"Bet per line (${MIN_BET}-${MAX_BET})",
+            font=FONT_LABEL,
+            bg=COLOR_BG,
+            fg=COLOR_CREAM,
         ).pack()
         self.bet_entry = tk.Entry(
-            self.root, font=FONT_INPUT, width=8, justify="center"
+            self.root,
+            font=FONT_INPUT,
+            width=8,
+            justify="center",
+            bg=COLOR_CREAM,
+            fg=COLOR_BG,
+            insertbackground=COLOR_BG,
         )
         self.bet_entry.insert(0, str(MIN_BET))
         self.bet_entry.pack(pady=(0, 10))
 
     def _build_buttons(self):
         self.spin_btn = tk.Button(
-            self.root, text="SPIN", command=self.spin, bg="green", fg="white",
-            font=FONT_BUTTON, width=10,
+            self.root,
+            text="SPIN",
+            command=self.spin,
+            font=FONT_BUTTON,
+            width=10,
+            bg=COLOR_GOLD,
+            fg=COLOR_BG,
+            activebackground=COLOR_GOLD_LIGHT,
+            activeforeground=COLOR_BG,
         )
         self.spin_btn.pack(pady=10)
 
         self.new_game_btn = tk.Button(
-            self.root, text="NEW GAME", command=self.new_game, state=tk.DISABLED,
-            font=FONT_BUTTON, width=10,
+            self.root,
+            text="NEW GAME",
+            command=self.new_game,
+            state=tk.DISABLED,
+            font=FONT_BUTTON,
+            width=10,
+            bg=COLOR_FELT_LIGHT,
+            fg=COLOR_CREAM,
+            disabledforeground="#6B8F82",
+            activebackground=COLOR_FELT_LIGHT,
+            activeforeground=COLOR_CREAM,
         )
         self.new_game_btn.pack(pady=(0, 15))
     
