@@ -19,7 +19,7 @@ symbol_count = {
 }
 
 symbol_value = {
-    "A": 5, "B": 4, "C": 3, "D": 2
+    "A": 50, "B": 25, "C": 10, "D": 6
 }
 
 def resource_path(relative_path):
