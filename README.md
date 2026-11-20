@@ -33,7 +33,13 @@ Each column is drawn from a pool of 20 symbols. Rarer symbols pay more.
 | C      | 6                  | 3 x bet               |
 | D      | 8                  | 2 x bet               |
 
-## Run it
+## Download
+
+Windows users can download the latest `slot_machine.exe` from the [Releases page](https://github.com/Nathani21/slot-machine-gui/releases/latest) and double-click it. No Python needed.
+
+Windows SmartScreen may warn because the file isn't code-signed. Click "More info", then "Run anyway".
+
+## Run from source
 
 Requires Python 3 with Tkinter, which is included with the standard Python installers for Windows and macOS. On some Linux systems you may need to install the `python3-tk` package. There are no other dependencies.
 
