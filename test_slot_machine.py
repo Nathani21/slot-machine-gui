@@ -9,6 +9,8 @@ from slot_machine import (
     check_winnings,
     format_result,
     get_spin,
+    load_high_score,
+    save_high_score,
     symbol_count,
     symbol_value,
 )
@@ -125,10 +127,10 @@ def tk_root():
 
 
 @pytest.fixture
-def app(tk_root):
+def app(tk_root, tmp_path):
     window = tk.Toplevel(tk_root)
     window.withdraw()
-    yield slot_machine.SlotMachine(window)
+    yield slot_machine.SlotMachine(window, score_path=tmp_path / "highscore.json")
     window.destroy()
 
 
@@ -259,3 +261,47 @@ def test_enter_key_does_nothing_after_game_over(app, popups, monkeypatch):
     app._on_enter()
     assert app.balance == 0
     assert popups == []
+
+# High score
+def test_load_high_score_missing_file_returns_starting_balance(tmp_path):
+    assert load_high_score(tmp_path / "nope.json") == slot_machine.STARTING_BALANCE
+
+
+def test_high_score_round_trip(tmp_path):
+    path = tmp_path / "scores" / "highscore.json"
+    save_high_score(path, 750)
+    assert load_high_score(path) == 750
+
+
+@pytest.mark.parametrize("content", ["not json", "[]", '{"high_score": "abc"}', "{}"])
+def test_load_high_score_ignores_bad_files(tmp_path, content):
+    path = tmp_path / "highscore.json"
+    path.write_text(content)
+    assert load_high_score(path) == slot_machine.STARTING_BALANCE
+
+
+def test_new_best_balance_is_saved_and_shown(app, popups, monkeypatch, tmp_path):
+    force_board(monkeypatch, TOP_ROW_WIN)
+    set_inputs(app, 1, 10)
+    app.spin()
+    best = slot_machine.STARTING_BALANCE + symbol_value["A"] * 10 - 10
+    assert app.high_score_label.cget("text") == f"Best: ${best}"
+    assert load_high_score(tmp_path / "highscore.json") == best
+
+
+def test_losing_does_not_lower_the_best(app, popups, monkeypatch):
+    force_board(monkeypatch, NO_WIN)
+    set_inputs(app, 1, 10)
+    app.spin()
+    assert app.high_score == slot_machine.STARTING_BALANCE
+
+
+def test_saved_best_is_loaded_at_start(tk_root, tmp_path):
+    path = tmp_path / "highscore.json"
+    save_high_score(path, 900)
+    window = tk.Toplevel(tk_root)
+    window.withdraw()
+    game = slot_machine.SlotMachine(window, score_path=path)
+    assert game.high_score == 900
+    assert game.high_score_label.cget("text") == "Best: $900"
+    window.destroy()
