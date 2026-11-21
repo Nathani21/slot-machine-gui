@@ -38,6 +38,7 @@ READY_TEXT = "Place your bet and spin!"
 SPIN_FRAME_MS = 60  # time between animation frames
 FRAMES_BEFORE_FIRST_STOP = 8
 FRAMES_BETWEEN_STOPS = 6
+SOUND_LEAD_FRAMES = 2  # play sounds this many frames early (1 frame = SPIN_FRAME_MS)
 
 symbol_count = {
     "A": 2, "B": 4, "C": 6, "D": 8
@@ -349,23 +350,33 @@ class SlotMachine:
             return
 
         slots = get_spin()
+        final_sound = self._final_sound(slots, lines, bet)
 
         if self.animate:
-            self._start_animation(slots, lines, bet)
+            self._start_animation(slots, lines, bet, final_sound)
         else:
+            self._play(final_sound)
             self._finish_spin(slots, lines, bet)
 
-    def _start_animation(self, slots, lines, bet):
+    def _final_sound(self, slots, lines, bet):
+        winnings, _ = check_winnings(slots, lines, bet)
+        if winnings > 0:
+            return "win"
+        if self.balance - lines * bet < MIN_BET:
+            return "game_over"
+        return "tick"
+
+    def _start_animation(self, slots, lines, bet, final_sound):
         self.spin_btn.config(state=tk.DISABLED)
         self._show_win_highlight([])
         self.result_label.config(text="Spinning...")
-        self._animate_frame(0, slots, lines, bet)
+        self._animate_frame(0, slots, lines, bet, final_sound)
 
-    def _animate_frame(self, frame, slots, lines, bet):
+    def _animate_frame(self, frame, slots, lines, bet, final_sound):
         for c in range(COLS):
             stop_frame = FRAMES_BEFORE_FIRST_STOP + c * FRAMES_BETWEEN_STOPS
-            if frame == stop_frame and c < COLS - 1:
-                self._play("tick")
+            if frame == max(0, stop_frame - SOUND_LEAD_FRAMES):
+                self._play("tick" if c < COLS - 1 else final_sound)
             for r in range(ROWS):
                 if frame >= stop_frame:
                     text = slots[c][r]
@@ -378,9 +389,15 @@ class SlotMachine:
             self._finish_spin(slots, lines, bet)
         else:
             self.root.after(
-                SPIN_FRAME_MS, self._animate_frame, frame + 1, slots, lines, bet
+                SPIN_FRAME_MS,
+                self._animate_frame,
+                frame + 1,
+                slots,
+                lines,
+                bet,
+                final_sound,
             )
-
+            
     def _finish_spin(self, slots, lines, bet):
         total_bet = lines * bet
 
@@ -398,11 +415,6 @@ class SlotMachine:
         self.balance_label.config(text=f"Balance: ${self.balance}")
 
         self.result_label.config(text=format_result(winnings, win_lines))
-
-        if winnings > 0:
-            self._play("win")
-        elif self.balance >= MIN_BET:
-            self._play("tick")
 
         if self.balance < MIN_BET:
             self.game_over()
@@ -434,7 +446,6 @@ class SlotMachine:
             self.spin()
 
     def game_over(self):
-        self._play("game_over")
         self.spin_btn.config(state=tk.DISABLED)
         self.new_game_btn.config(state=tk.NORMAL)
         messagebox.showinfo(

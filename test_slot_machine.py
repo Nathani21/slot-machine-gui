@@ -448,3 +448,19 @@ def test_make_wav_builds_a_valid_wav_of_the_right_length():
 def test_play_sound_is_silent_without_winsound(monkeypatch):
     monkeypatch.setattr(slot_machine, "winsound", None)
     assert real_play_sound("win") is None
+
+# Sound timing
+def test_final_sound_matches_the_outcome(app):
+    assert app._final_sound(TOP_ROW_WIN, 1, 10) == "win"
+    assert app._final_sound(NO_WIN, 1, 10) == "tick"
+    assert app._final_sound(NO_WIN, 1, 100) == "game_over"
+
+
+def test_sounds_play_slightly_before_the_reel_stops(app, sounds, monkeypatch):
+    monkeypatch.setattr(slot_machine, "SOUND_LEAD_FRAMES", 2)
+    monkeypatch.setattr(app.root, "after", lambda *args, **kwargs: None)
+    first_stop = slot_machine.FRAMES_BEFORE_FIRST_STOP
+    app._animate_frame(first_stop - 3, NO_WIN, 1, 1, "tick")
+    assert sounds == []
+    app._animate_frame(first_stop - 2, NO_WIN, 1, 1, "tick")
+    assert sounds == ["tick"]
