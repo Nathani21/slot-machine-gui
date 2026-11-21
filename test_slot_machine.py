@@ -1,3 +1,4 @@
+import time
 import tkinter as tk
 
 import pytest
@@ -130,8 +131,26 @@ def tk_root():
 def app(tk_root, tmp_path):
     window = tk.Toplevel(tk_root)
     window.withdraw()
+    yield slot_machine.SlotMachine(
+        window, score_path=tmp_path / "highscore.json", animate=False
+    )
+    window.destroy()
+
+
+@pytest.fixture
+def animated_app(tk_root, tmp_path, monkeypatch):
+    monkeypatch.setattr(slot_machine, "SPIN_FRAME_MS", 1)
+    window = tk.Toplevel(tk_root)
+    window.withdraw()
     yield slot_machine.SlotMachine(window, score_path=tmp_path / "highscore.json")
     window.destroy()
+
+
+def wait_for_spin(tk_root, app, timeout=5.0):
+    deadline = time.monotonic() + timeout
+    while str(app.spin_btn.cget("state")) == "disabled" and time.monotonic() < deadline:
+        tk_root.update()
+        time.sleep(0.001)
 
 
 @pytest.fixture
@@ -305,3 +324,46 @@ def test_saved_best_is_loaded_at_start(tk_root, tmp_path):
     assert game.high_score == 900
     assert game.high_score_label.cget("text") == "Best: $900"
     window.destroy()
+
+# Spin animation
+def test_spin_button_is_disabled_while_the_reels_spin(
+    animated_app, tk_root, popups, monkeypatch
+):
+    force_board(monkeypatch, NO_WIN)
+    set_inputs(animated_app, 1, 10)
+    animated_app.spin()
+    assert str(animated_app.spin_btn.cget("state")) == "disabled"
+    assert animated_app.result_label.cget("text") == "Spinning..."
+    animated_app._on_enter()  # ignored while spinning
+    wait_for_spin(tk_root, animated_app)
+    assert str(animated_app.spin_btn.cget("state")) == "normal"
+    assert animated_app.balance == slot_machine.STARTING_BALANCE - 10
+
+
+def test_animated_spin_ends_on_the_real_result(
+    animated_app, tk_root, popups, monkeypatch
+):
+    force_board(monkeypatch, TOP_ROW_WIN)
+    set_inputs(animated_app, 1, 10)
+    animated_app.spin()
+    wait_for_spin(tk_root, animated_app)
+    win = symbol_value["A"] * 10
+    assert [label.cget("text") for label in animated_app.slot_labels[0]] == ["A", "A", "A"]
+    assert animated_app.balance == slot_machine.STARTING_BALANCE + win - 10
+    for label in animated_app.slot_labels[0]:
+        assert label.cget("bg") == slot_machine.COLOR_GOLD
+
+
+def test_win_highlight_clears_as_the_next_spin_starts(
+    animated_app, tk_root, popups, monkeypatch
+):
+    set_inputs(animated_app, 1, 1)
+    force_board(monkeypatch, TOP_ROW_WIN)
+    animated_app.spin()
+    wait_for_spin(tk_root, animated_app)
+    force_board(monkeypatch, NO_WIN)
+    animated_app.spin()
+    for row in animated_app.slot_labels:
+        for label in row:
+            assert label.cget("bg") == slot_machine.COLOR_CREAM
+    wait_for_spin(tk_root, animated_app)
