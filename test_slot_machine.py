@@ -243,3 +243,19 @@ def test_new_game_clears_the_win_highlight(app, popups, monkeypatch):
     for row in app.slot_labels:
         for label in row:
             assert label.cget("bg") == slot_machine.COLOR_CREAM
+
+def test_enter_key_spins(app, popups, monkeypatch):
+    force_board(monkeypatch, NO_WIN)
+    set_inputs(app, 1, 10)
+    app._on_enter()
+    assert app.balance == slot_machine.STARTING_BALANCE - 10
+
+
+def test_enter_key_does_nothing_after_game_over(app, popups, monkeypatch):
+    force_board(monkeypatch, NO_WIN)
+    set_inputs(app, 1, 100)
+    app.spin()
+    popups.clear()
+    app._on_enter()
+    assert app.balance == 0
+    assert popups == []
