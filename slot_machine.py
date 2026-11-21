@@ -97,6 +97,9 @@ class SlotMachine:
         self._build_inputs()
         self._build_buttons()
 
+        self.root.bind("<Return>", self._on_enter)
+        self.root.bind("<KP_Enter>", self._on_enter)
+
     def _set_icon(self):
         try:
             self.root.iconbitmap(resource_path(os.path.join("assets", "icon.ico")))
@@ -262,6 +265,10 @@ class SlotMachine:
                 bg, fg, border = COLOR_CREAM, COLOR_RED, COLOR_GOLD
             for label in row:
                 label.config(bg=bg, fg=fg, highlightbackground=border)
+
+    def _on_enter(self, event=None):
+        if str(self.spin_btn.cget("state")) == "normal":
+            self.spin()
 
     def game_over(self):
         self.spin_btn.config(state=tk.DISABLED)
