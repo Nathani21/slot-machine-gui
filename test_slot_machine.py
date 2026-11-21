@@ -1,5 +1,7 @@
+import io
 import time
 import tkinter as tk
+import wave
 
 import pytest
 
@@ -379,11 +381,13 @@ def test_win_highlight_clears_as_the_next_spin_starts(
 
 # Sound
 class FakeWinsound:
-    def __init__(self):
-        self.beeps = []
+    SND_MEMORY = 4
 
-    def Beep(self, frequency, duration):
-        self.beeps.append((frequency, duration))
+    def __init__(self):
+        self.played = []
+
+    def PlaySound(self, data, flags):
+        self.played.append((data, flags))
 
 
 def test_winning_spin_plays_the_win_sound(app, popups, sounds, monkeypatch):
@@ -425,12 +429,20 @@ def test_each_reel_stop_ticks_during_the_animation(
     assert sounds == ["tick", "tick", "tick"]
 
 
-def test_play_sound_beeps_the_tones_in_order(monkeypatch):
+def test_play_sound_plays_the_wav_from_memory(monkeypatch):
     fake = FakeWinsound()
     monkeypatch.setattr(slot_machine, "winsound", fake)
     thread = real_play_sound("win")
     thread.join(timeout=2)
-    assert fake.beeps == slot_machine.SOUNDS["win"]
+    assert fake.played == [(slot_machine.WAVES["win"], fake.SND_MEMORY)]
+
+
+def test_make_wav_builds_a_valid_wav_of_the_right_length():
+    data = slot_machine.make_wav([(440, 100)])
+    with wave.open(io.BytesIO(data)) as wav:
+        assert wav.getnchannels() == 1
+        assert wav.getframerate() == slot_machine.SAMPLE_RATE
+        assert wav.getnframes() == int(slot_machine.SAMPLE_RATE * 100 / 1000)
 
 
 def test_play_sound_is_silent_without_winsound(monkeypatch):
