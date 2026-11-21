@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import sys
@@ -35,6 +36,30 @@ symbol_value = {
 def resource_path(relative_path):
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, relative_path)
+
+
+def score_file_path():
+    base = os.environ.get("APPDATA") or os.path.expanduser("~")
+    return os.path.join(base, "SlotMachineGUI", "highscore.json")
+
+
+def load_high_score(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return max(int(json.load(f)["high_score"]), STARTING_BALANCE)
+    except (OSError, ValueError, KeyError, TypeError):
+        return STARTING_BALANCE
+
+
+def save_high_score(path, score):
+    try:
+        folder = os.path.dirname(path)
+        if folder:
+            os.makedirs(folder, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"high_score": score}, f)
+    except OSError:
+        pass
 
 
 # LOGIC
@@ -83,7 +108,9 @@ def get_spin():
 
 # GUI
 class SlotMachine:
-    def __init__(self, root):
+    def __init__(self, root, score_path=None):
+        self.score_path = score_path or score_file_path()
+        self.high_score = load_high_score(self.score_path)
         self.root = root
         self.root.title("Slot Machine v1.2")
         self._set_icon()
@@ -92,6 +119,7 @@ class SlotMachine:
         self.balance = STARTING_BALANCE
 
         self._build_balance_label()
+        self._build_high_score_label()
         self._build_reels()
         self._build_result_label()
         self._build_inputs()
@@ -115,6 +143,16 @@ class SlotMachine:
             fg=COLOR_GOLD,
         )
         self.balance_label.pack(pady=(15, 10))
+
+    def _build_high_score_label(self):
+        self.high_score_label = tk.Label(
+            self.root,
+            text=f"Best: ${self.high_score}",
+            font=FONT_LABEL,
+            bg=COLOR_BG,
+            fg=COLOR_CREAM,
+        )
+        self.high_score_label.pack(pady=(0, 10))
 
     def _build_reels(self):
         self.slot_labels = []
@@ -248,6 +286,7 @@ class SlotMachine:
         self._show_win_highlight(win_lines)
 
         self.balance += winnings - total_bet
+        self._update_high_score()
 
         self.balance_label.config(text=f"Balance: ${self.balance}")
 
@@ -265,6 +304,12 @@ class SlotMachine:
                 bg, fg, border = COLOR_CREAM, COLOR_RED, COLOR_GOLD
             for label in row:
                 label.config(bg=bg, fg=fg, highlightbackground=border)
+
+    def _update_high_score(self):
+        if self.balance > self.high_score:
+            self.high_score = self.balance
+            self.high_score_label.config(text=f"Best: ${self.high_score}")
+            save_high_score(self.score_path, self.high_score)
 
     def _on_enter(self, event=None):
         if str(self.spin_btn.cget("state")) == "normal":
