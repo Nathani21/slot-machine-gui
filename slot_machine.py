@@ -1,9 +1,13 @@
+import io
 import json
+import math
 import os
 import random
+import struct
 import sys
 import threading
 import tkinter as tk
+import wave
 from tkinter import messagebox
 
 try:
@@ -72,6 +76,8 @@ def save_high_score(path, score):
         pass
 
 
+SAMPLE_RATE = 22050
+
 SOUNDS = {
     "tick": [(700, 40)],
     "win": [(660, 90), (880, 90), (1320, 220)],
@@ -79,16 +85,36 @@ SOUNDS = {
 }
 
 
+def make_wav(tones):
+    """Build a small mono 16-bit WAV (as bytes) from (frequency in Hz, length in ms) tones."""
+    frames = bytearray()
+    for frequency, duration in tones:
+        count = int(SAMPLE_RATE * duration / 1000)
+        for i in range(count):
+            fade = min(1, i / 200, (count - i) / 200)  # short fade avoids clicks
+            value = int(12000 * fade * math.sin(2 * math.pi * frequency * i / SAMPLE_RATE))
+            frames += struct.pack("<h", value)
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(SAMPLE_RATE)
+        wav.writeframes(bytes(frames))
+    return buffer.getvalue()
+
+
+WAVES = {name: make_wav(tones) for name, tones in SOUNDS.items()}
+
+
 def play_sound(name):
     if winsound is None:
         return None
 
     def worker():
-        for frequency, duration in SOUNDS[name]:
-            try:
-                winsound.Beep(frequency, duration)
-            except RuntimeError:
-                return
+        try:
+            winsound.PlaySound(WAVES[name], winsound.SND_MEMORY)
+        except RuntimeError:
+            pass
 
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()
