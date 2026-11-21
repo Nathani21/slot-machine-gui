@@ -25,6 +25,10 @@ COLOR_RED = "#C62828"
 FONT_RESULT = ("Arial", 16, "bold")
 READY_TEXT = "Place your bet and spin!"
 
+SPIN_FRAME_MS = 60  # time between animation frames
+FRAMES_BEFORE_FIRST_STOP = 8
+FRAMES_BETWEEN_STOPS = 6
+
 symbol_count = {
     "A": 2, "B": 4, "C": 6, "D": 8
 }
@@ -108,7 +112,8 @@ def get_spin():
 
 # GUI
 class SlotMachine:
-    def __init__(self, root, score_path=None):
+    def __init__(self, root, score_path=None, animate=True):
+        self.animate = animate
         self.score_path = score_path or score_file_path()
         self.high_score = load_high_score(self.score_path)
         self.root = root
@@ -277,6 +282,38 @@ class SlotMachine:
 
         slots = get_spin()
 
+        if self.animate:
+            self._start_animation(slots, lines, bet)
+        else:
+            self._finish_spin(slots, lines, bet)
+
+    def _start_animation(self, slots, lines, bet):
+        self.spin_btn.config(state=tk.DISABLED)
+        self._show_win_highlight([])
+        self.result_label.config(text="Spinning...")
+        self._animate_frame(0, slots, lines, bet)
+
+    def _animate_frame(self, frame, slots, lines, bet):
+        for c in range(COLS):
+            stop_frame = FRAMES_BEFORE_FIRST_STOP + c * FRAMES_BETWEEN_STOPS
+            for r in range(ROWS):
+                if frame >= stop_frame:
+                    text = slots[c][r]
+                else:
+                    text = random.choice(tuple(symbol_count))
+                self.slot_labels[r][c].config(text=text)
+
+        last_stop = FRAMES_BEFORE_FIRST_STOP + (COLS - 1) * FRAMES_BETWEEN_STOPS
+        if frame >= last_stop:
+            self._finish_spin(slots, lines, bet)
+        else:
+            self.root.after(
+                SPIN_FRAME_MS, self._animate_frame, frame + 1, slots, lines, bet
+            )
+
+    def _finish_spin(self, slots, lines, bet):
+        total_bet = lines * bet
+
         # Display slots
         for r in range(ROWS):
             for c in range(COLS):
@@ -294,6 +331,8 @@ class SlotMachine:
 
         if self.balance < MIN_BET:
             self.game_over()
+        else:
+            self.spin_btn.config(state=tk.NORMAL)
 
     def _show_win_highlight(self, win_lines):
         winning_rows = {line - 1 for line in win_lines}
