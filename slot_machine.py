@@ -2,8 +2,14 @@ import json
 import os
 import random
 import sys
+import threading
 import tkinter as tk
 from tkinter import messagebox
+
+try:
+    import winsound
+except ImportError:  # not on Windows
+    winsound = None
 
 # Constants
 MAX_LINES, MAX_BET, MIN_BET, ROWS, COLS = 3, 100, 1, 3, 3
@@ -66,6 +72,29 @@ def save_high_score(path, score):
         pass
 
 
+SOUNDS = {
+    "tick": [(700, 40)],
+    "win": [(660, 90), (880, 90), (1320, 220)],
+    "game_over": [(440, 200), (330, 200), (220, 400)],
+}
+
+
+def play_sound(name):
+    if winsound is None:
+        return None
+
+    def worker():
+        for frequency, duration in SOUNDS[name]:
+            try:
+                winsound.Beep(frequency, duration)
+            except RuntimeError:
+                return
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+    return thread
+
+
 # LOGIC
 def check_winnings(columns, lines, bet):
     winnings = 0
@@ -120,6 +149,7 @@ class SlotMachine:
         self.root.title("Slot Machine v1.2")
         self._set_icon()
         self.root.configure(bg=COLOR_BG)
+        self.sound_on = tk.BooleanVar(master=self.root, value=True)
 
         self.balance = STARTING_BALANCE
 
@@ -257,6 +287,18 @@ class SlotMachine:
             activeforeground=COLOR_CREAM,
         )
         self.new_game_btn.pack(pady=(0, 15))
+
+        tk.Checkbutton(
+            self.root,
+            text="Sound",
+            variable=self.sound_on,
+            font=FONT_LABEL,
+            bg=COLOR_BG,
+            fg=COLOR_CREAM,
+            selectcolor=COLOR_FELT_LIGHT,
+            activebackground=COLOR_BG,
+            activeforeground=COLOR_CREAM,
+        ).pack(pady=(0, 10))
     
     def spin(self):
         try:
@@ -296,6 +338,8 @@ class SlotMachine:
     def _animate_frame(self, frame, slots, lines, bet):
         for c in range(COLS):
             stop_frame = FRAMES_BEFORE_FIRST_STOP + c * FRAMES_BETWEEN_STOPS
+            if frame == stop_frame and c < COLS - 1:
+                self._play("tick")
             for r in range(ROWS):
                 if frame >= stop_frame:
                     text = slots[c][r]
@@ -329,6 +373,11 @@ class SlotMachine:
 
         self.result_label.config(text=format_result(winnings, win_lines))
 
+        if winnings > 0:
+            self._play("win")
+        elif self.balance >= MIN_BET:
+            self._play("tick")
+
         if self.balance < MIN_BET:
             self.game_over()
         else:
@@ -350,11 +399,16 @@ class SlotMachine:
             self.high_score_label.config(text=f"Best: ${self.high_score}")
             save_high_score(self.score_path, self.high_score)
 
+    def _play(self, name):
+        if self.sound_on.get():
+            play_sound(name)
+
     def _on_enter(self, event=None):
         if str(self.spin_btn.cget("state")) == "normal":
             self.spin()
 
     def game_over(self):
+        self._play("game_over")
         self.spin_btn.config(state=tk.DISABLED)
         self.new_game_btn.config(state=tk.NORMAL)
         messagebox.showinfo(

@@ -16,6 +16,8 @@ from slot_machine import (
     symbol_value,
 )
 
+real_play_sound = slot_machine.play_sound
+
 # Boards are lists of columns: board[col][row]
 NO_WIN = [["A", "B", "C"], ["B", "C", "D"], ["C", "D", "A"]]
 TOP_ROW_WIN = [["A", "B", "C"], ["A", "C", "D"], ["A", "D", "B"]]
@@ -151,6 +153,13 @@ def wait_for_spin(tk_root, app, timeout=5.0):
     while str(app.spin_btn.cget("state")) == "disabled" and time.monotonic() < deadline:
         tk_root.update()
         time.sleep(0.001)
+
+
+@pytest.fixture(autouse=True)
+def sounds(monkeypatch):
+    played = []
+    monkeypatch.setattr(slot_machine, "play_sound", played.append)
+    return played
 
 
 @pytest.fixture
@@ -367,3 +376,63 @@ def test_win_highlight_clears_as_the_next_spin_starts(
         for label in row:
             assert label.cget("bg") == slot_machine.COLOR_CREAM
     wait_for_spin(tk_root, animated_app)
+
+# Sound
+class FakeWinsound:
+    def __init__(self):
+        self.beeps = []
+
+    def Beep(self, frequency, duration):
+        self.beeps.append((frequency, duration))
+
+
+def test_winning_spin_plays_the_win_sound(app, popups, sounds, monkeypatch):
+    force_board(monkeypatch, TOP_ROW_WIN)
+    set_inputs(app, 1, 10)
+    app.spin()
+    assert sounds == ["win"]
+
+
+def test_losing_spin_plays_a_tick(app, popups, sounds, monkeypatch):
+    force_board(monkeypatch, NO_WIN)
+    set_inputs(app, 1, 10)
+    app.spin()
+    assert sounds == ["tick"]
+
+
+def test_game_over_plays_only_the_game_over_sound(app, popups, sounds, monkeypatch):
+    force_board(monkeypatch, NO_WIN)
+    set_inputs(app, 1, 100)
+    app.spin()
+    assert sounds == ["game_over"]
+
+
+def test_sound_switch_silences_everything(app, popups, sounds, monkeypatch):
+    app.sound_on.set(False)
+    force_board(monkeypatch, TOP_ROW_WIN)
+    set_inputs(app, 1, 10)
+    app.spin()
+    assert sounds == []
+
+
+def test_each_reel_stop_ticks_during_the_animation(
+    animated_app, tk_root, popups, sounds, monkeypatch
+):
+    force_board(monkeypatch, NO_WIN)
+    set_inputs(animated_app, 1, 10)
+    animated_app.spin()
+    wait_for_spin(tk_root, animated_app)
+    assert sounds == ["tick", "tick", "tick"]
+
+
+def test_play_sound_beeps_the_tones_in_order(monkeypatch):
+    fake = FakeWinsound()
+    monkeypatch.setattr(slot_machine, "winsound", fake)
+    thread = real_play_sound("win")
+    thread.join(timeout=2)
+    assert fake.beeps == slot_machine.SOUNDS["win"]
+
+
+def test_play_sound_is_silent_without_winsound(monkeypatch):
+    monkeypatch.setattr(slot_machine, "winsound", None)
+    assert real_play_sound("win") is None
