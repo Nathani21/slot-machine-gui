@@ -1,3 +1,8 @@
+import tkinter as tk
+
+import pytest
+
+import slot_machine
 from slot_machine import (
     COLS,
     ROWS,
@@ -106,3 +111,135 @@ def test_format_result_single_line():
 
 def test_format_result_multiple_lines():
     assert format_result(75, [1, 3]) == "You won $75 on lines 1, 3!"
+
+# GUI
+@pytest.fixture(scope="session")
+def tk_root():
+    try:
+        root = tk.Tk()
+    except tk.TclError as error:
+        pytest.skip(f"Tk is not available here: {error}")
+    root.withdraw()
+    yield root
+    root.destroy()
+
+
+@pytest.fixture
+def app(tk_root):
+    window = tk.Toplevel(tk_root)
+    window.withdraw()
+    yield slot_machine.SlotMachine(window)
+    window.destroy()
+
+
+@pytest.fixture
+def popups(monkeypatch):
+    shown = []
+    monkeypatch.setattr(
+        slot_machine.messagebox, "showerror", lambda title, msg: shown.append(("error", msg))
+    )
+    monkeypatch.setattr(
+        slot_machine.messagebox, "showinfo", lambda title, msg: shown.append(("info", msg))
+    )
+    return shown
+
+
+def set_inputs(app, lines, bet):
+    app.lines_entry.delete(0, tk.END)
+    app.lines_entry.insert(0, str(lines))
+    app.bet_entry.delete(0, tk.END)
+    app.bet_entry.insert(0, str(bet))
+
+
+def force_board(monkeypatch, board):
+    monkeypatch.setattr(slot_machine, "get_spin", lambda: board)
+
+
+def test_app_starts_ready(app):
+    assert app.balance == slot_machine.STARTING_BALANCE
+    assert app.result_label.cget("text") == slot_machine.READY_TEXT
+    assert str(app.spin_btn.cget("state")) == "normal"
+    assert str(app.new_game_btn.cget("state")) == "disabled"
+
+
+def test_losing_spin_charges_the_bet(app, popups, monkeypatch):
+    force_board(monkeypatch, NO_WIN)
+    set_inputs(app, 2, 10)
+    app.spin()
+    assert app.balance == slot_machine.STARTING_BALANCE - 20
+    assert app.result_label.cget("text") == "No win this time"
+    assert popups == []
+
+
+def test_winning_spin_pays_and_highlights_the_row(app, popups, monkeypatch):
+    force_board(monkeypatch, TOP_ROW_WIN)
+    set_inputs(app, 1, 10)
+    app.spin()
+    win = symbol_value["A"] * 10
+    assert app.balance == slot_machine.STARTING_BALANCE + win - 10
+    assert app.result_label.cget("text") == format_result(win, [1])
+    assert [label.cget("text") for label in app.slot_labels[0]] == ["A", "A", "A"]
+    for label in app.slot_labels[0]:
+        assert label.cget("bg") == slot_machine.COLOR_GOLD
+    for label in app.slot_labels[1] + app.slot_labels[2]:
+        assert label.cget("bg") == slot_machine.COLOR_CREAM
+    assert popups == []
+
+
+def test_highlight_clears_on_the_next_spin(app, popups, monkeypatch):
+    set_inputs(app, 1, 1)
+    force_board(monkeypatch, TOP_ROW_WIN)
+    app.spin()
+    force_board(monkeypatch, NO_WIN)
+    app.spin()
+    for row in app.slot_labels:
+        for label in row:
+            assert label.cget("bg") == slot_machine.COLOR_CREAM
+
+
+@pytest.mark.parametrize(
+    "lines, bet",
+    [("abc", "1"), ("1", "x"), ("0", "1"), ("4", "1"), ("1", "0"), ("1", "101")],
+)
+def test_invalid_input_shows_an_error_and_does_not_spin(app, popups, lines, bet):
+    set_inputs(app, lines, bet)
+    app.spin()
+    assert len(popups) == 1
+    assert popups[0][0] == "error"
+    assert app.balance == slot_machine.STARTING_BALANCE
+
+
+def test_not_enough_balance_shows_an_error(app, popups):
+    set_inputs(app, 3, 100)
+    app.spin()
+    assert popups == [("error", "Not enough balance!")]
+    assert app.balance == slot_machine.STARTING_BALANCE
+
+
+def test_game_over_then_new_game(app, popups, monkeypatch):
+    force_board(monkeypatch, NO_WIN)
+    set_inputs(app, 1, 100)
+    app.spin()
+    assert app.balance == 0
+    assert str(app.spin_btn.cget("state")) == "disabled"
+    assert str(app.new_game_btn.cget("state")) == "normal"
+    assert popups[-1][0] == "info"
+
+    app.new_game()
+    assert app.balance == slot_machine.STARTING_BALANCE
+    assert app.result_label.cget("text") == slot_machine.READY_TEXT
+    assert str(app.spin_btn.cget("state")) == "normal"
+    assert str(app.new_game_btn.cget("state")) == "disabled"
+    for row in app.slot_labels:
+        for label in row:
+            assert label.cget("text") == "?"
+
+
+def test_new_game_clears_the_win_highlight(app, popups, monkeypatch):
+    force_board(monkeypatch, TOP_ROW_WIN)
+    set_inputs(app, 1, 1)
+    app.spin()
+    app.new_game()
+    for row in app.slot_labels:
+        for label in row:
+            assert label.cget("bg") == slot_machine.COLOR_CREAM
